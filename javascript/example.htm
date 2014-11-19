@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <title>base4k demo</title>
+ </head>
+ <body>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="base4k.js"></script>
+  <script type="text/javascript">
+     toString = function(array)
+     {
+        var result = "";
+        for(var i=0;i<array.length;i++)
+           result+=String.fromCharCode(array[i]);
+        return result;
+     };
+     toArray = function(string)
+     {
+        var result = new Uint8Array(string.length);
+        for(var i=0;i<string.length;i++)
+                result[i] = string.charCodeAt(i);
+        return result;
+     };
+     
+     doEncode = function()
+     {
+        var encoded = Base4K.encode(toArray($('#toEncode').val()));
+        var decoded = toString(Base4K.decode(encoded));
+        $('#outputEnc').text(encoded);
+        $('#outputDec').text(decoded);
+        $('#outputContainer').show();
+     };
+  </script>
+  
+  <input type="text" id="toEncode"/>
+  <input type="button" onclick="doEncode()" value="encode"/><br/><br/>
+  <div id="outputContainer" style="display:none;">
+   <span style="display: inline-block; width: 120px;">Encoded:</span><span id="outputEnc"></span><br/>
+   <span style="display: inline-block; width: 120px;">Decoded:</span><span id="outputDec"></span><br/>
+  </div>
+ </body>
+</body>

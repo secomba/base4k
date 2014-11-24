@@ -1,13 +1,40 @@
 base4k
 ======
 
+### Summary
+
 Base4k is an encoding system originally developed for boxcryptor's filename encryption.
 It uses approx. 4000 Asian unicode characters to encode an array of bytes.
 
-Why use it?
-===========
+### Target area of application
 
-When you store encoded data, sometimes you've got to deal with space limitations - e.g.
-when working with third-party websites or cloud storage providers. The limit, however,
-is determined by the amound of characters, not the memory necessary to store them.
-Base4k "shrinks" its input data from n bytes to 2/3*n characters.
+The encoding system is best used when you have to store binary data in an encoded format, and there is a space limitation on unicode characters. This is the case for many third-party websites, as well as for filenames. If encoded with base64, the amount of bytes would be expanded approx. by the factor 4/3. Base4k, on the other hand,
+"shrinks" the bytes to an amount of approx. 2/3 unicode characters.
+
+### Encoding algorithm
+
+For the most part, the algorithm encodes 3 bytes to 2 unicode characters.
+
+<div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 1</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 105px;">&nbsp;</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 2</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 105px;">&nbsp;</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 3</div><div style="float: left; text-align: right; width: 10px;">]</div>  
+<div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 190px;">unicode character 1</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 190px;">unicode character 2</div><div style="float: left; text-align: right; width: 10px;">]</div><br/>
+
+This procedure is simple: We concatenate one and a half bytes, interpret it as an integer and add the value 0x5000. The result is an unicode code point, encoding 1.5 bytes. For three bytes, this results in two unicode characters. Note that the actual memory amount necessary to store the two unicode characters is much larger, if utf-8 is used, the amount of bytes doubles.
+
+If this algorithm is continued, we might end up with either one or half a byte at the end that couldn't be encoded. In this case, we add 0x4000 to it, and interpret the result as the final code point.
+
+### Mapping
+
+Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0x5000-0x5fff. The reasons for this area are as follows:  
+<ul>
+<li>There are no control characters in this area</li>
+<li>All characters are printable</li>
+<li>There are no similiar characters that might get converted to the same character on the (remote) platform</li>
+</ul>
+
+### Building the examples
+##### C/C++
+<u style="float: left; width: 100px;">Command:</u>gcc -o example.exe *.c
+##### Javascript
+<u style="float: left; width: 100px;">Command:</u>just open example.htm
+##### Java
+<u style="float: left; width: 100px;">Command:</u>javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java

@@ -15,8 +15,8 @@ The encoding system is best used when you have to store binary data in an encode
 
 For the most part, the algorithm encodes 3 bytes to 2 unicode characters.
 
-<div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 1</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 105px;">&nbsp;</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 2</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 105px;">&nbsp;</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 50px;">byte 3</div><div style="float: left; text-align: right; width: 10px;">]</div>  
-<div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 190px;">unicode character 1</div><div style="float: left; text-align: right; width: 10px;">]</div><div style="float: left; width: 10px;">[</div><div style="float: left; text-align: center; width: 190px;">unicode character 2</div><div style="float: left; text-align: right; width: 10px;">]</div><br/>
+``[-byte 1-]---------------[-byte 2-]---------------[-byte 3-]``  
+``[-----unicode character 1----][-----unicode character 2----]``
 
 This procedure is simple: We concatenate one and a half bytes, interpret it as an integer and add the value 0x5000. The result is an unicode code point, encoding 1.5 bytes. For three bytes, this results in two unicode characters. Note that the actual memory amount necessary to store the two unicode characters is much larger, if utf-8 is used, the amount of bytes doubles.
 
@@ -33,8 +33,8 @@ Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0
 
 ### Building the examples
 ##### C/C++
-<u style="float: left; width: 100px;">Command:</u>gcc -o example.exe *.c
+>**Command:** gcc -o example.exe *.c
 ##### Javascript
-<u style="float: left; width: 100px;">Command:</u>just open example.htm
+**Command:** just open example.htm
 ##### Java
-<u style="float: left; width: 100px;">Command:</u>javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java
+**Command:** javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java

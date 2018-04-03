@@ -40,6 +40,12 @@ Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0
 
 >**Command:** just open example.htm
 
+##### Typescript
+
+>**Command:** tsc base4k.ts
+
+>open example.htm
+
 ##### Java
 
 >**Command:** javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java

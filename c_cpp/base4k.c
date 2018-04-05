@@ -9,10 +9,28 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-b4kStatus base4kEncode(B4K_IN uint8_t* cData, B4K_IN_OUT uint32_t* ccData, B4K_OUT B4K_NEEDS_FREE uint16_t** cEncoded)
+b4kErrorCode initialize(B4K_IN_OUT PB4K_ENCODING_SETTINGS encodingSettings, unsigned int version)
+{
+        static const unsigned int BASE1_START = 0x06000;
+        static const unsigned int BASE1_START_LEGACY = 0x05000;
+
+        switch (version) {
+                case 1:
+                        encodingSettings->base1Start = BASE1_START_LEGACY;
+                        break;
+                case 2:
+                        encodingSettings->base1Start = BASE1_START;
+                        break;
+                case 3:
+                        return B4K_INVALID_VERSION;
+        }
+
+        return B4K_SUCCESS;
+}
+
+b4kErrorCode base4kEncode(B4K_IN PB4K_ENCODING_SETTINGS encodingSettings, B4K_IN uint8_t* cData, B4K_IN_OUT uint32_t* ccData, B4K_OUT B4K_NEEDS_FREE uint16_t** cEncoded)
 {
         static const unsigned int BASE_FLAG_START = 0x04000;
-        static const unsigned int BASE1_START = 0x05000;
         static const unsigned int BASE_FLAG_SIZE = 0x100;
         static const unsigned int BASE1_SIZE = 0x05000;
 
@@ -22,16 +40,17 @@ b4kStatus base4kEncode(B4K_IN uint8_t* cData, B4K_IN_OUT uint32_t* ccData, B4K_O
         
         *cEncoded = (uint16_t*)calloc(*ccData+1,sizeof(uint16_t));
         if(*cEncoded==NULL) {
-                return B4K_ERROR;
+                return B4K_MEMORY_ERROR;
         }
 
         for (i = 0; i < *ccData*2-2; i+=3) {
-                if (i % 2 == 0)
+                if (i % 2 == 0) {
                         offset = ((cData[i >> 1] << 4) | ((cData[(i >> 1) + 1] >> 4) & 0x0f)) & 0x0fff;
-                else
+                } else {
                         offset = ((cData[(i - 1) >> 1] << 8) | (cData[(i + 1) >> 1] & 0xff)) & 0x0fff;
+                }
 
-                (*cEncoded)[outputRunner++] = offset + BASE1_START;
+                (*cEncoded)[outputRunner++] = offset + encodingSettings->base1Start;
         }
 
         if ((*ccData << 1) % 3 == 2) {
@@ -49,10 +68,9 @@ b4kStatus base4kEncode(B4K_IN uint8_t* cData, B4K_IN_OUT uint32_t* ccData, B4K_O
         return B4K_SUCCESS;
 }
 
-b4kStatus base4KDecode(B4K_IN uint16_t* cEncoded, B4K_IN_OUT uint32_t* ccEncoded, B4K_OUT B4K_NEEDS_FREE uint8_t** cDecoded)
+b4kErrorCode base4KDecodeInternal(B4K_IN uint16_t* cEncoded, B4K_IN_OUT uint32_t* ccEncoded, B4K_OUT B4K_NEEDS_FREE uint8_t** cDecoded, unsigned int iBase1Start)
 {
         static const unsigned int BASE_FLAG_START = 0x04000;
-        static const unsigned int BASE1_START = 0x05000;
         static const unsigned int BASE_FLAG_SIZE = 0x100;
         static const unsigned int BASE1_SIZE = 0x05000;
 
@@ -70,28 +88,30 @@ b4kStatus base4KDecode(B4K_IN uint16_t* cEncoded, B4K_IN_OUT uint32_t* ccEncoded
                 encodedLen = *ccEncoded;
         }
         *cDecoded = calloc(encodedLen*2, sizeof(uint8_t));
-        if(*cDecoded==NULL)
-                return B4K_ERROR;
+        if(*cDecoded==NULL) {
+                return B4K_MEMORY_ERROR;
+        }
                 
         for (i = 0; i < encodedLen; i++) {
                 prevCode = code;
                 code = cEncoded[i];
 
                 // check for valid encoding
-                if (!(code >= BASE1_START && code < BASE1_START + BASE1_SIZE)) {
+                if (!(code >= iBase1Start && code < iBase1Start + BASE1_SIZE)) {
                         if (i < encodedLen - 1 || !(code >= BASE_FLAG_START && code < BASE_FLAG_START + BASE_FLAG_SIZE))
-                                return B4K_ERROR;
+                                return B4K_DECODING_ERROR;
                 }
 
-                if (code >= BASE1_START) {
-                        code -= BASE1_START;
+                if (code >= iBase1Start) {
+                        code -= iBase1Start;
                 }
                 else {
                         code -= BASE_FLAG_START;
-                        if (i % 2 == 0)
+                        if (i % 2 == 0) {
                                 (*cDecoded)[outputRunner++] = code & 0xff;
-                        else
+                        } else {
                                 (*cDecoded)[outputRunner++] = ((prevCode << 4) | (code & 0x0f)) & 0xff;
+                        }
                         break;
                 }
                 if (i % 2 == 0) {
@@ -106,4 +126,17 @@ b4kStatus base4KDecode(B4K_IN uint16_t* cEncoded, B4K_IN_OUT uint32_t* ccEncoded
         *ccEncoded = outputRunner;
 
         return B4K_SUCCESS;
+}
+
+b4kErrorCode base4KDecode(B4K_IN uint16_t* cEncoded, B4K_IN_OUT uint32_t* ccEncoded, B4K_OUT B4K_NEEDS_FREE uint8_t** cDecoded)
+{
+        static const unsigned int BASE1_START = 0x06000;
+        static const unsigned int BASE1_START_LEGACY = 0x05000;
+
+        b4kErrorCode errorCode = base4KDecodeInternal(cEncoded, ccEncoded, cDecoded, BASE1_START);
+        if (errorCode == B4K_DECODING_ERROR) {
+                errorCode = base4KDecodeInternal(cEncoded, ccEncoded, cDecoded, BASE1_START_LEGACY);
+        }
+
+        return errorCode;
 }

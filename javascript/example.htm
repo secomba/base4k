@@ -24,8 +24,9 @@
      
      doEncode = function()
      {
-        var encoded = Base4K.encode(toArray($('#toEncode').val()));
-        var decoded = toString(Base4K.decode(encoded));
+        var base4k = new Base4K(2);
+        var encoded = base4k.encode(toArray($('#toEncode').val()));
+        var decoded = toString(base4k.decode(encoded));
         $('#outputEnc').text(encoded);
         $('#outputDec').text(decoded);
         $('#outputContainer').show();

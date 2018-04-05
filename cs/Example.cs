@@ -12,6 +12,7 @@ namespace Example
     {
         static void Main(string[] args)
         {
+            Base4K base4k = new Base4K();
             Encoding enc = new UTF8Encoding(true, true);
             string consoleRepl = "";
             
@@ -20,16 +21,17 @@ namespace Example
             consoleRepl += "## plaintext ##\n";
             consoleRepl += plain + "\n";
 		
-		    string encoded = Base4K.Encode(enc.GetBytes(plain));
+		    string encoded = base4k.Encode(enc.GetBytes(plain));
             consoleRepl += "## encoded ##\n";
             consoleRepl += encoded + "\n";
             consoleRepl += "## decoded ##\n";
-		    string decoded = enc.GetString(Base4K.Decode(encoded));
-            if(decoded!=null)
+		    string decoded = enc.GetString(base4k.Decode(encoded));
+            if(decoded!=null) {
                 consoleRepl += decoded+"\n";
-            else
+            } else {
                 consoleRepl += "Provided string is not a valid base4k-encoding!\n";
-
+            }
+            
             MessageBox.Show(consoleRepl);
         }
     }

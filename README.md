@@ -18,18 +18,22 @@ For the most part, the algorithm encodes 3 bytes to 2 unicode characters.
 ``[-byte 1-]---------------[-byte 2-]---------------[-byte 3-]``  
 ``[-----unicode character 1----][-----unicode character 2----]``
 
-This procedure is simple: We concatenate one and a half bytes, interpret it as an integer and add the value 0x5000. The result is an unicode code point, encoding 1.5 bytes. For three bytes, this results in two unicode characters. Note that the actual memory amount necessary to store the two unicode characters is much larger, if utf-8 is used, the amount of bytes doubles.
+This procedure is simple: We concatenate one and a half bytes, interpret it as an integer and add the value 0x6000. The result is an unicode code point, encoding 1.5 bytes. For three bytes, this results in two unicode characters. Note that the actual memory amount necessary to store the two unicode characters is much larger, if utf-8 is used, the amount of bytes doubles.
 
 If this algorithm is continued, we might end up with either one or half a byte at the end that couldn't be encoded. In this case, we add 0x4000 to it, and interpret the result as the final code point.
 
 ### Mapping
 
-Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0x5000-0x5fff. The reasons for this area are as follows:  
+Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0x6000-0x6fff. The reasons for this area are as follows:  
 <ul>
 <li>There are no control characters in this area</li>
 <li>All characters are printable</li>
 <li>There are no similiar characters that might get converted to the same character on the (remote) platform</li>
 </ul>
+
+### Legacy
+
+The first version of Base4k used a slightly different character range from 0x4000-0x400ff and 0x5000-0x5fff. The range was subsequently changed to exclude some unwanted characters from the encoding set. The provided implementations are able to handle both versions automatically on decoding, and can be configured to use the deprecated character set for encoding as well.
 
 ### Building the examples
 ##### C/C++
@@ -48,8 +52,19 @@ Base4k maps bytes (0x00-0xff) to unicode points in the areas 0x4000-0x40ff and 0
 
 ##### Java
 
->**Command:** javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java
+>**Command:** javac Example.java com/secomba/base4k/Base4K.java com/secomba/base4k/DecodingFailedException.java com/secomba/base4k/Base4KVersion.java
 
 ##### C&#35;
 
 >**Command:** csc /out:example.exe *.cs
+
+### Test vectors
+
+encode("") = "";
+encode("f") = "䁦";
+encode("fo") = "晦䀏";
+encode("foo") = "晦潯";
+encode("foob") = "晦潯䁢";
+encode("fooba") = "晦潯昦䀁";
+encode("foobar") = "晦潯昦慲";
+encode("please encode me!") = "朆汥昗捥戆敮昶潤晒恭晒䀁"

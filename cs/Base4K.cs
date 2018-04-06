@@ -9,24 +9,36 @@ using System.Text;
 
 namespace Secomba
 {
-    public static class Base4K
+    public enum Base4KVersion {
+        V1,
+        V2
+    }
+
+    public class Base4K
     {
         // Base addresses for mapping regions
         //
         private const int BASE_FLAG_START = 0x04000;
-        private const int BASE1_START = 0x05000;
+        private const int BASE1_START = 0x06000;
+        private const int BASE1_START_LEGACY = 0x05000;
 
         // Sizes of each mapping region
         //
         private const int BASE_FLAG_SIZE = 0x100;
         private const int BASE1_SIZE = 0x01000;
 
+        private readonly Base4KVersion _version;
+
+        public Base4K(Base4KVersion version = Base4KVersion.V2) {
+            _version = version;
+        }
+
         /// <summary>
         ///     Encodes the specified raw data as Base4k.
         /// </summary>
         /// <param name="raw">The raw.</param>
         /// <returns></returns>
-        public static string Encode(byte[] raw)
+        public string Encode(byte[] raw)
         {
             Encoding enc = new UTF8Encoding(true, true);
 
@@ -39,7 +51,7 @@ namespace Secomba
                         offset = ((raw[i/2] << 8) | (raw[i/2 + 1] & 0xff)) & 0x0fff;
                     }
 
-                    offset += BASE1_START;
+                    offset += _version == Base4KVersion.V1 ? BASE1_START_LEGACY : BASE1_START;
 
                     // now that offset is a valid unicode character: code it to utf-8
                     var utfByets = ToUtf8(offset);
@@ -60,13 +72,25 @@ namespace Secomba
             }
         }
 
+        /// <summary>
+        ///     Decodes the specified encoded from Base65 - returns null if decoding failed.
+        /// </summary>
+        /// <param name="encoded">The encoded.</param>
+        /// <returns></returns>
+        public byte[] Decode(string encoded) {
+            byte[] result = DecodeInternal(encoded, BASE1_START);
+            if (result == null) {
+                result = DecodeInternal(encoded, BASE1_START_LEGACY);
+            }
+            return result;
+        }
 
         /// <summary>
         ///     Decodes the specified encoded from Base65 - returns null if decoding failed.
         /// </summary>
         /// <param name="encoded">The encoded.</param>
         /// <returns></returns>
-        public static byte[] Decode(string encoded)
+        private byte[] DecodeInternal(string encoded, int base1Start)
         {
             int code;
             int nrOfBytes;
@@ -95,7 +119,7 @@ namespace Secomba
                     code = ToCode(encBytes, i, nrOfBytes);
                     i += nrOfBytes;
 
-                    if(!(code >= BASE1_START && code < BASE1_START + BASE1_SIZE)) {
+                    if(!(code >= base1Start && code < base1Start + BASE1_SIZE)) {
                         if(i < encBytes.Length || !(code >= BASE_FLAG_START && code < BASE_FLAG_START + BASE_FLAG_SIZE)) {
                             return null;
                         }
@@ -106,8 +130,8 @@ namespace Secomba
                 var tempCodeBuffer = intCollector.ToArray();
 
                 for(var i = 0; i < tempCodeBuffer.Length; i++) {
-                    if(tempCodeBuffer[i] >= BASE1_START) {
-                        tempCodeBuffer[i] -= BASE1_START;
+                    if(tempCodeBuffer[i] >= base1Start) {
+                        tempCodeBuffer[i] -= base1Start;
                     } else {
                         tempCodeBuffer[i] -= BASE_FLAG_START;
                         if(i%2 == 0) {
@@ -134,7 +158,7 @@ namespace Secomba
         /// </summary>
         /// <param name="code">The code.</param>
         /// <returns></returns>
-        public static byte[] ToUtf8(int code)
+        private byte[] ToUtf8(int code)
         {
             byte[] result;
 
@@ -169,7 +193,7 @@ namespace Secomba
         /// <param name="offset">The offset.</param>
         /// <param name="length">The length.</param>
         /// <returns></returns>
-        private static int ToCode(IList<byte> utf8Char, int offset, int length)
+        private int ToCode(IList<byte> utf8Char, int offset, int length)
         {
             var result = 0;
 

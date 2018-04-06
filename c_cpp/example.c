@@ -10,6 +10,9 @@ int main(int argc,char* argv[])
         uint16_t* cEncoded;
         uint8_t* cDecoded;
         int i = 0;
+        B4K_ENCODING_SETTINGS encodingSettings;
+
+        initialize(&encodingSettings, 2);
 
         for(i=0;i<10;i++)
                 data[i] = i;
@@ -19,7 +22,7 @@ int main(int argc,char* argv[])
                 printf("%d ",data[i]);
         printf("\n");
 
-        base4kEncode(data, &ccData, &cEncoded);
+        base4kEncode(&encodingSettings, data, &ccData, &cEncoded);
         
         printf("## encoded ##\n");
         for(i=0;i<ccData;i++)

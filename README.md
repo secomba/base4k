@@ -60,11 +60,11 @@ The first version of Base4k used a slightly different character range from 0x400
 
 ### Test vectors
 
-encode("") = "";
-encode("f") = "䁦";
-encode("fo") = "晦䀏";
-encode("foo") = "晦潯";
-encode("foob") = "晦潯䁢";
-encode("fooba") = "晦潯昦䀁";
-encode("foobar") = "晦潯昦慲";
+encode("") = ""; <br />
+encode("f") = "䁦"; <br />
+encode("fo") = "晦䀏"; <br />
+encode("foo") = "晦潯"; <br />
+encode("foob") = "晦潯䁢"; <br />
+encode("fooba") = "晦潯昦䀁"; <br />
+encode("foobar") = "晦潯昦慲"; <br />
 encode("please encode me!") = "朆汥昗捥戆敮昶潤晒恭晒䀁"
